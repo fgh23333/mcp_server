@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# 虚拟环境
+env/
+venv/
+ENV/
+.venv/
+.env/
+
+# VS Code
+.vscode/
+
+# 日志文件
+*.log
+
+# 单元测试缓存
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# 临时文件
+*.tmp
+*.swp
+*.bak
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# pipenv
+Pipfile.lock
+
+# mypy
+.mypy_cache/
+
+# 本地配置
+.env
+generated_nodeppts/
