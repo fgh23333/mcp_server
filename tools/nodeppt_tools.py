@@ -147,8 +147,7 @@ async def generate_nodeppt_markdown(args: GenerateMarkdownArgs) -> Dict[str, Any
     幻灯片内容可以直接包含 Mermaid 代码块 (` ```mermaid\\n...\\n``` `)，
     NodePPT 在渲染时会自行处理。如果有 Mermaid 代码块，则需要在文件顶部添加 
     `plugins:
-        - mermaid
-        - echarts`。
+        - mermaid`。
 
     Args:
         args (GenerateMarkdownArgs): 包含生成 Markdown 所需所有参数的对象。
