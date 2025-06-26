@@ -2,6 +2,19 @@
 
 This project contains a Python server that can be run locally and integrated with Cline as a remote MCP server.
 
+## 0. Create .env file
+
+If your project requires environment variables (e.g., API keys, database credentials), create a `.env` file in the root directory of the project.
+
+Example `.env` content:
+
+```
+GOOGLE_API_KEY="<your-google-api-key-here>"
+COHERE_API_KEY="<your-cohere-api-key-here>"
+```
+
+**Note**: Do not commit your `.env` file to version control as it may contain sensitive information.
+
 ## 1. Install Dependencies
 
 Ensure you have Python and pip installed. Then, install the required Python dependencies using the `requirements.txt` file:
