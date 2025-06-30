@@ -2,7 +2,6 @@ from typing import Dict, Any
 from server import mcp
 import subprocess
 
-
 @mcp.tool()
 def branch_content_sync(
     git_repo_path: str,
