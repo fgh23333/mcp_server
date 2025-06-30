@@ -78,7 +78,7 @@ class ToolReloaderHandler(FileSystemEventHandler):
         print("重新初始化 FastMCP 以清除旧工具...")
         mcp = FastMCP("Demo") # 重新创建 FastMCP 实例
 
-        load_tools_from_dir(STATIC_TOOLS_DIR)
+        # load_tools_from_dir(STATIC_TOOLS_DIR)
         load_tools_from_dir(HOT_RELOAD_TOOLS_DIR)
         print("--- 工具重载成功！ ---")
 

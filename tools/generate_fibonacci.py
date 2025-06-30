@@ -12,11 +12,14 @@ def generate_fibonacci(n: int) -> List[int]:
     Returns:
         List[int]: 包含斐波那契数列前n个数字的列表。如果n小于等于0，则返回空列表。
     """
-    if n <= 0:
+    if n < 0:
         return []
     
+    if n == 0:
+        return ["0"]
+    
     sequence = []
-    a, b = 0, 1
+    a, b = 1, 1
     for _ in range(n):
         sequence.append(a)
         a, b = b, a + b
