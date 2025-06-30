@@ -3,8 +3,13 @@ import pandas as pd
 import os
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from typing import Dict, Any
 from server import mcp  # 保证引用的是 server.py 中的实例
+
+from config import API_KEY, ENDPOINT
+
+# 从你的项目配置中导入 API_KEY
 
 try:
     from config import GOOGLE_API_KEY
@@ -28,8 +33,8 @@ def analyze_csv_file(file_path: str, question: str) -> str:
     print(f"--- [文件分析工具(Gemini) - 默认工具] 正在分析文件 '{file_path}'，问题: '{question}' ---")
 
     # 检查 GOOGLE_API_KEY 是否设置
-    if not GOOGLE_API_KEY or GOOGLE_API_KEY == "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET":
-        error_msg = "GOOGLE_API_KEY 未设置或为默认值，无法调用 Gemini 模型进行文件分析。"
+    if not API_KEY or API_KEY == "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET":
+        error_msg = "API_KEY 未设置或为默认值，无法调用模型进行文件分析。"
         print(f"--- [文件分析工具(Gemini) - 默认工具 ERROR] {error_msg} ---")
         return f"错误: {error_msg}"
 
@@ -42,7 +47,13 @@ def analyze_csv_file(file_path: str, question: str) -> str:
         print(f"--- [文件分析工具(Gemini) ERROR] 读取CSV文件时出错: {e} ---")
         return f"错误: 读取CSV文件时出错: {e}"
 
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, google_api_key=GOOGLE_API_KEY)
+    llm = ChatOpenAI(
+        model="google/gemini-2.5-pro",  # 使用最新的Gemini 2.5 Pro 模型
+        temperature=0.1,
+        api_key=API_KEY,
+        base_url=ENDPOINT
+    )
+    # llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=GOOGLE_API_KEY)
     
     # 创建Pandas DataFrame Agent
     pandas_agent_executor = create_pandas_dataframe_agent(

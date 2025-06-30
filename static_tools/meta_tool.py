@@ -14,6 +14,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END, START
 from pydantic import BaseModel, Field, ValidationError
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+
+from config import API_KEY, ENDPOINT
 
 # 从你的项目配置中导入 GOOGLE_API_KEY
 try:
@@ -34,14 +37,20 @@ class SimpleMetaToolAgentState(BaseModel):
 # --- SimpleMetaToolAgent Class (Internal Logic) ---
 class SimpleMetaToolAgent:
     # 构造函数不再接收 ctx
-    def __init__(self, google_api_key: str):
-        self.google_api_key = google_api_key
+    def __init__(self, api_key: str):
+        self.api_key = api_key
 
-        if not self.google_api_key or self.google_api_key == "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET":
-            print("ERROR: GOOGLE_API_KEY 未设置或为默认值，SimpleMetaToolAgent 将无法正常工作。")
+        if not self.api_key or self.api_key == "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET":
+            print("ERROR: api_key 未设置或为默认值，SimpleMetaToolAgent 将无法正常工作。")
             self.model = None
         else:
-            self.model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, google_api_key=self.google_api_key)
+            self.model = ChatOpenAI(
+                model="google/gemini-2.5-pro", 
+                temperature=0.1,
+                api_key=API_KEY, 
+                base_url=ENDPOINT
+            )
+            # self.model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, google_api_key=self.google_api_key)
         
         self.graph = self._build_graph()
         print("INFO: SimpleMetaToolAgent 初始化完成。") # 仅打印到服务器终端
