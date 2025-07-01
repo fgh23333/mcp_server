@@ -1,8 +1,10 @@
 from typing import Dict
 from server import mcp
+import asyncio
+from typing import Dict
 
 @mcp.tool()
-def greet_user(name: str) -> Dict:
+async def greet_user(name: str) -> Dict:
     """
     Greets the user with a personalized message.
 

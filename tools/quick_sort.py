@@ -1,8 +1,9 @@
 from server import mcp
 from typing import List, Any
+import asyncio
 
 @mcp.tool()
-def quick_sort(arr: List[Any]) -> List[Any]:
+async def quick_sort(arr: List[Any]) -> List[Any]:
     """
     使用快速排序算法对列表进行排序。
 
@@ -14,9 +15,18 @@ def quick_sort(arr: List[Any]) -> List[Any]:
     """
     if len(arr) <= 1:
         return arr
+    
+    # For CPU-bound operations like sorting, run in a separate thread
+    # to avoid blocking the event loop.
+    return await asyncio.to_thread(_quick_sort_sync, arr)
+
+def _quick_sort_sync(arr: List[Any]) -> List[Any]:
+    """Synchronous implementation of quicksort."""
+    if len(arr) <= 1:
+        return arr
     else:
         pivot = arr[len(arr) // 2]
         left = [x for x in arr if x < pivot]
         middle = [x for x in arr if x == pivot]
         right = [x for x in arr if x > pivot]
-        return quick_sort(left) + middle + quick_sort(right)
+        return _quick_sort_sync(left) + middle + _quick_sort_sync(right)

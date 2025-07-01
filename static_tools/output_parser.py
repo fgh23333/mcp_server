@@ -1,10 +1,12 @@
 # mcp_server/default_tools/output_parser.py
 import re
 from markdown_it import MarkdownIt
+import asyncio
 from server import mcp  # 确保引用的是 server.py 中的实例
+from loguru import logger
 
 @mcp.tool()
-def parse_and_format_output(answer_content: str) -> str:
+async def parse_and_format_output(answer_content: str) -> str:
     """
     【输出格式化工具】接收最终的、可能包含Markdown和Mermaid代码的答复字符串，
     并将其转换为一个功能完整的、自包含的HTML页面。
@@ -15,7 +17,7 @@ def parse_and_format_output(answer_content: str) -> str:
     Returns:
         str: 一个包含渲染后的文本和Mermaid图（如果存在）的HTML字符串。
     """
-    print("--- [输出工具] 正在将最终答案转换为HTML... ---")
+    logger.info("--- [输出工具] 正在将最终答案转换为HTML... ---")
     
     mermaid_code = ""
     text_content = answer_content
@@ -28,7 +30,7 @@ def parse_and_format_output(answer_content: str) -> str:
     
     # 将剩余的Markdown文本转换为HTML
     md = MarkdownIt()
-    text_html = md.render(text_content)
+    text_html = await asyncio.to_thread(md.render, text_content)
     
     # 构建最终的HTML页面
     html_template = f"""

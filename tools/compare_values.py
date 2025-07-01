@@ -1,8 +1,9 @@
 from server import mcp
 from typing import Dict, Union
+import asyncio
 
 @mcp.tool()
-def compare_values(value1: Union[int, float], value2: Union[int, float]) -> Dict[str, str]:
+async def compare_values(value1: Union[int, float], value2: Union[int, float]) -> Dict[str, str]:
     """
     Compares two numerical values and returns the result.
 
