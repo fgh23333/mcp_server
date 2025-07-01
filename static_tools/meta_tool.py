@@ -20,11 +20,11 @@ from langchain_openai import ChatOpenAI
 from config import API_KEY, ENDPOINT
 
 # 从你的项目配置中导入 GOOGLE_API_KEY
-try:
-    from config import GOOGLE_API_KEY
-except ImportError:
-    logger.warning("config.py not found or GOOGLE_API_KEY not set. Attempting to use environment variable.")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET")
+# try:
+#     from config import GOOGLE_API_KEY
+# except ImportError:
+#     logger.warning("config.py not found or GOOGLE_API_KEY not set. Attempting to use environment variable.")
+#     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET")
 
 # --- LangGraph Agent State Definition ---
 class SimpleMetaToolAgentState(BaseModel):
@@ -38,25 +38,19 @@ class SimpleMetaToolAgentState(BaseModel):
 # --- SimpleMetaToolAgent Class (Internal Logic) ---
 class SimpleMetaToolAgent:
     # 构造函数不再接收 ctx
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-
-        if not self.api_key or self.api_key == "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET":
-            logger.error("api_key 未设置或为默认值，SimpleMetaToolAgent 将无法正常工作。")
-            self.model = None
-        else:
-            self.model = ChatOpenAI(
-                model="google/gemini-2.5-pro", 
-                temperature=0.1,
-                api_key=API_KEY, 
-                base_url=ENDPOINT
-            )
-            # self.model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, google_api_key=self.google_api_key)
+    def __init__(self):
+        self.model = ChatOpenAI(
+            model="google/gemini-2.5-pro", 
+            temperature=0.1,
+            api_key=API_KEY, 
+            base_url=ENDPOINT
+        )
+        # self.model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, google_api_key=GOOGLE_API_KEY)
         
         self.graph = self._build_graph()
         logger.info("SimpleMetaToolAgent 初始化完成。") # 仅打印到服务器终端
 
-    def _generate_tool_name(self, user_request: str) -> str:
+    async def _generate_tool_name(self, user_request: str) -> str:
         """
         使用大模型根据用户需求自动生成合理的工具名称。
         """
@@ -69,7 +63,7 @@ class SimpleMetaToolAgent:
             f"{user_request}\n"
         )
         try:
-            response = self.model.invoke([HumanMessage(content=prompt)]).content.strip()
+            response = (await self.model.ainvoke([HumanMessage(content=prompt)])).content.strip()
             # 只取首行，去除多余内容
             tool_name = response.splitlines()[0]
             tool_name = tool_name.strip()
@@ -82,7 +76,7 @@ class SimpleMetaToolAgent:
             logger.warning(f"LLM命名失败，回退到时间戳命名。错误: {e}")
         return f"generated_tool_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    def _tool_writer_node(self, state: SimpleMetaToolAgentState) -> SimpleMetaToolAgentState:
+    async def _tool_writer_node(self, state: SimpleMetaToolAgentState) -> SimpleMetaToolAgentState:
         # 不再使用 self.ctx，直接在 state.messages 中记录
         logger.info(f"节点: 1. 编写工具代码 (重试次数: {state.retries})")
         
@@ -95,7 +89,7 @@ class SimpleMetaToolAgent:
 
         tool_name = state.tool_name
         if not tool_name:
-            tool_name = self._generate_tool_name(user_request)
+            tool_name = await self._generate_tool_name(user_request)
             logger.info(f"    -> 生成工具名称：{tool_name}")
 
         system_prompt_content = (
@@ -129,7 +123,7 @@ class SimpleMetaToolAgent:
         ])
 
         chain = full_prompt | self.model
-        raw_response = chain.invoke({}).content
+        raw_response = (await chain.ainvoke({})).content
         
         code_match = re.search(r"```python\s*\n(.*?)\n```", raw_response, re.DOTALL)
         if code_match:
@@ -225,13 +219,13 @@ class SimpleMetaToolAgent:
         )
         return workflow.compile()
 
-    # invoke 方法优化：直接使用 graph.invoke()
-    def invoke(self, initial_state: SimpleMetaToolAgentState) -> SimpleMetaToolAgentState:
-        logger.info("正在调用 LangGraph invoke 获取最终状态...")
+    # ainvoke 方法优化：直接使用 graph.ainvoke()
+    async def ainvoke(self, initial_state: SimpleMetaToolAgentState) -> SimpleMetaToolAgentState:
+        logger.info("正在调用 LangGraph ainvoke 获取最终状态...")
         try:
-            # LangGraph 的 invoke 可能会返回一个字典（代表最终状态的更新），
+            # LangGraph 的 ainvoke 可能会返回一个字典（代表最终状态的更新），
             # 而不是直接的 Pydantic 模型实例。我们需要将其显式地转换回来。
-            raw_final_state_output = self.graph.invoke(initial_state)
+            raw_final_state_output = await self.graph.ainvoke(initial_state)
             
             # 尝试将 LangGraph 的输出（通常是 dict 或 AddableValuesDict）
             # 转换为你的 SimpleMetaToolAgentState 模型
@@ -243,20 +237,20 @@ class SimpleMetaToolAgent:
                 final_state = raw_final_state_output
             else:
                 # 记录详细错误，并包装成 SimpleMetaToolAgentState 返回
-                error_msg = f"LangGraph invoke 返回了非预期的类型: {type(raw_final_state_output)}. 预期 dict 或 SimpleMetaToolAgentState."
+                error_msg = f"LangGraph ainvoke 返回了非预期的类型: {type(raw_final_state_output)}. 预期 dict 或 SimpleMetaToolAgentState."
                 logger.error(error_msg)
                 return SimpleMetaToolAgentState(
                     messages=[HumanMessage(content=f"错误：AI工具构建大师核心执行失败: {error_msg}")]
                 )
 
             if final_state.messages:
-                logger.info(f"Invoke 完成。最终消息: {final_state.messages[-1].content[:200]}...")
+                logger.info(f"ainvoke 完成。最终消息: {final_state.messages[-1].content[:200]}...")
             else:
-                logger.warning("Invoke 完成，但 final_state.messages 为空。")
+                logger.warning("ainvoke 完成，但 final_state.messages 为空。")
             
             return final_state
         except Exception as e:
-            error_msg = f"LangGraph invoke 调用失败: {e}. Traceback: {traceback.format_exc()}"
+            error_msg = f"LangGraph ainvoke 调用失败: {e}. Traceback: {traceback.format_exc()}"
             logger.error(error_msg)
             return SimpleMetaToolAgentState(
                 messages=[HumanMessage(content=f"错误：AI工具构建大师核心执行失败: {e}. 详情请看服务器日志。")]
@@ -284,7 +278,7 @@ async def create_simple_mcp_tool(tool_description_request: str) -> str:
     logger.info(f"调用 'create_simple_mcp_tool'。请求: '{tool_description_request[:100]}...'")
     
     # 每次调用工具时都创建 SimpleMetaToolAgent 的新实例
-    agent = SimpleMetaToolAgent(GOOGLE_API_KEY)
+    agent = SimpleMetaToolAgent()
         
     if agent.model is None:
         return "错误：AI工具构建大师未能初始化，因为 GOOGLE_API_KEY 未设置。请检查您的配置。"
@@ -296,7 +290,7 @@ async def create_simple_mcp_tool(tool_description_request: str) -> str:
         )
         
         # 调用 LangGraph 代理链来执行任务
-        final_state = await agent.invoke(initial_state)
+        final_state = await agent.ainvoke(initial_state)
         
         # 返回最终的所有消息内容，拼接起来作为结果
         # 这样调用者可以获取到执行过程中的所有日志和错误信息

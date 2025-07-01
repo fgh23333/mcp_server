@@ -12,11 +12,11 @@ from loguru import logger
 from config import API_KEY, ENDPOINT
 
 # 从你的项目配置中导入 API_KEY
-try:
-    from config import GOOGLE_API_KEY
-except ImportError:
-    logger.warning("config.py not found or GOOGLE_API_KEY not set. Attempting to use environment variable.")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET")
+# try:
+#     from config import GOOGLE_API_KEY
+# except ImportError:
+#     logger.warning("config.py not found or GOOGLE_API_KEY not set. Attempting to use environment variable.")
+#     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_FALLBACK_GOOGLE_API_KEY_IF_ENV_NOT_SET")
 
 @mcp.tool()
 async def analyze_csv_file(file_path: str, question: str) -> str:
@@ -67,8 +67,8 @@ async def analyze_csv_file(file_path: str, question: str) -> str:
 
     logger.warning("--- [文件分析工具 - 安全警告] 即将执行由LLM生成的Python代码进行数据分析。 ---")
     try:
-        # The agent's invoke method might be blocking, run in a thread
-        result = await asyncio.to_thread(pandas_agent_executor.invoke, {"input": question})
+        # The agent's ainvoke method is asynchronous
+        result = await pandas_agent_executor.ainvoke({"input": question})
         
         # Pandas DataFrame Agent 的结果通常在 "output" 键中
         output = result.get("output", "未能获得有效的输出。")
