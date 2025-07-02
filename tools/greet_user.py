@@ -1,7 +1,7 @@
 from typing import Dict
 from server import mcp
 import asyncio
-from typing import Dict
+from logger import log as logger
 
 @mcp.tool()
 async def greet_user(name: str) -> Dict:
@@ -14,5 +14,7 @@ async def greet_user(name: str) -> Dict:
     Returns:
         A dictionary containing the greeting message.
     """
+    logger.info(f"Generating greeting for user: {name}")
     greeting = f"Hello, {name}! Welcome!"
+    logger.success(f"Generated greeting: '{greeting}'")
     return {"message": greeting}

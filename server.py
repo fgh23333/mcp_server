@@ -4,6 +4,7 @@ import importlib.util
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from logger import log  # 导入配置好的 logger
 
 os.environ["FASTMCP_PORT"] = "8000"
 from mcp.server.fastmcp import FastMCP
@@ -24,10 +25,10 @@ def load_tools_from_dir(dir_path: str):
     """
     full_dir = os.path.join(os.path.dirname(__file__), dir_path)
     if not os.path.isdir(full_dir):
-        print(f"警告: 未找到工具目录: {full_dir}")
+        log.warning(f"工具目录未找到: {full_dir}")
         return
 
-    print(f"正在从以下目录加载工具: {full_dir}")
+    log.info(f"正在从以下目录加载工具: {full_dir}")
     for path in glob.glob(os.path.join(full_dir, "*.py")):
         name = os.path.splitext(os.path.basename(path))[0]
         if name.startswith("_"):
@@ -40,9 +41,9 @@ def load_tools_from_dir(dir_path: str):
             spec = importlib.util.spec_from_file_location(module_name, path)
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            print(f"成功加载工具模块: {dir_path}/{name}.py")
+            log.success(f"成功加载工具模块: {dir_path}/{name}.py")
         except Exception as e:
-            print(f"[错误] 加载 {dir_path}/{name}.py 失败: {e}")
+            log.error(f"加载 {dir_path}/{name}.py 失败: {e}")
 
 ### 热重载事件处理器 (Watchdog)
 
@@ -67,7 +68,7 @@ class ToolReloaderHandler(FileSystemEventHandler):
         if current_time - self.last_reload_time < self.reload_debounce_seconds:
             return
         
-        print(f"\n--- 检测到 {event.src_path} 文件变化，正在重载工具... ---")
+        log.info(f"检测到 {event.src_path} 文件变化，正在重载工具...")
         self.last_reload_time = current_time
 
         # 执行重载逻辑：
@@ -75,20 +76,20 @@ class ToolReloaderHandler(FileSystemEventHandler):
         # 对于生产环境，如果 MCP 实例维护了其他重要状态，可能需要更精细的
         # unregister/re-register 机制 (例如 mcp.unregister_tool(tool_name))。
         global mcp
-        print("重新初始化 FastMCP 以清除旧工具...")
+        log.info("重新初始化 FastMCP 以清除旧工具...")
         mcp = FastMCP("Demo") # 重新创建 FastMCP 实例
 
         # load_tools_from_dir(STATIC_TOOLS_DIR)
         load_tools_from_dir(HOT_RELOAD_TOOLS_DIR)
-        print("--- 工具重载成功！ ---")
+        log.success("--- 工具重载成功！ ---")
 
 ### 服务器启动和运行
 
 # --- 初始加载工具 ---
-print("--- 正在进行初始工具加载... ---")
+log.info("--- 正在进行初始工具加载... ---")
 load_tools_from_dir(STATIC_TOOLS_DIR)
 load_tools_from_dir(HOT_RELOAD_TOOLS_DIR)
-print("--- 初始工具加载完成。 ---")
+log.info("--- 初始工具加载完成。 ---")
 
 # --- 设置热重载 (Watchdog) ---
 event_handler = ToolReloaderHandler(mcp, HOT_RELOAD_TOOLS_DIR)
@@ -96,14 +97,14 @@ observer = Observer()
 # 监听 HOT_RELOAD_TOOLS_DIR 目录，recursive=True 表示递归监听子目录
 observer.schedule(event_handler, HOT_RELOAD_TOOLS_DIR, recursive=True)
 observer.start()
-print(f"正在递归监听目录 '{HOT_RELOAD_TOOLS_DIR}' 的文件变化...")
+log.info(f"正在递归监听目录 '{HOT_RELOAD_TOOLS_DIR}' 的文件变化...")
 
 # --- 运行 MCP 服务器 ---
 try:
-    print("\n--- 正在启动 MCP 服务器... ---")
+    log.info("--- 正在启动 MCP 服务器... ---")
     mcp.run(transport="sse")
 except KeyboardInterrupt:
-    print("\n--- 正在停止 MCP 服务器... ---")
+    log.info("--- 正在停止 MCP 服务器... ---")
     observer.stop() # 停止 watchdog 观察者
 observer.join() # 等待观察者线程结束
-print("--- 服务器已停止，监视器已终止。 ---")
+log.info("--- 服务器已停止，监视器已终止。 ---")

@@ -1,6 +1,7 @@
 from server import mcp
 from typing import List, Any
 import asyncio
+from logger import log as logger
 
 @mcp.tool()
 async def quick_sort(arr: List[Any]) -> List[Any]:
@@ -13,12 +14,16 @@ async def quick_sort(arr: List[Any]) -> List[Any]:
     Returns:
         List[Any]: 排序后的新列表。
     """
+    logger.info(f"Starting quick sort for a list of {len(arr)} items.")
     if len(arr) <= 1:
+        logger.info("List has 0 or 1 element, returning as is.")
         return arr
     
     # For CPU-bound operations like sorting, run in a separate thread
     # to avoid blocking the event loop.
-    return await asyncio.to_thread(_quick_sort_sync, arr)
+    sorted_arr = await asyncio.to_thread(_quick_sort_sync, arr)
+    logger.success(f"Successfully sorted list of {len(arr)} items.")
+    return sorted_arr
 
 def _quick_sort_sync(arr: List[Any]) -> List[Any]:
     """Synchronous implementation of quicksort."""

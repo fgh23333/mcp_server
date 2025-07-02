@@ -7,7 +7,7 @@ import datetime
 from typing import Dict, Any, Optional, List
 
 from server import mcp # 保证引用的是 server.py 中的 mcp 实例
-from loguru import logger
+from logger import log as logger # 从中央日志记录器导入
 
 # LangChain 和 LangGraph 相关的导入
 from langchain_core.messages import HumanMessage

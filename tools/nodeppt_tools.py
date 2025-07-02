@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 from pydantic import BaseModel, Field
-from loguru import logger
+from logger import log as logger
 
 # 从 server.py 导入共享的 mcp 实例
 from server import mcp

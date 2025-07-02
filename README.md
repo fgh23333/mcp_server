@@ -44,3 +44,23 @@ To use the tools provided by this server within Cline, you need to configure it 
     *   **Server URL**: `http://localhost:8000/sse`
 
 After saving these settings, Cline should be able to connect to your local server and expose its tools.
+
+## 4. Switching to Google Gemini API
+
+By default, some tools may use other API providers. If you wish to use Google's Gemini models, you will need to perform the following steps:
+
+1.  **Ensure you have a `GOOGLE_API_KEY`** set in your `.env` file, as described in Step 0.
+2.  **Manually edit the tool files.** Some tool files (e.g., `static_tools/file_analysis_tool.py`, `static_tools/meta_tool.py`) contain commented-out code for using `ChatGoogleGenerativeAI`. You will need to:
+    *   Comment out the line that initializes the current LLM (e.g., `ChatOpenAI`).
+    *   Uncomment the line that initializes `ChatGoogleGenerativeAI`.
+
+    **Example in `static_tools/file_analysis_tool.py`:**
+
+    ```python
+    # Comment out the existing LLM
+    # llm = ChatOpenAI(...)
+
+    # Uncomment the Google Gemini LLM
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, google_api_key=GOOGLE_API_KEY)
+    ```
+3.  **Restart the server.** After making these changes, restart the Python server (`python server.py`) for the changes to take effect.

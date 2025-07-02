@@ -3,7 +3,7 @@ import re
 from markdown_it import MarkdownIt
 import asyncio
 from server import mcp  # 确保引用的是 server.py 中的实例
-from loguru import logger
+from logger import log as logger  # 从中央日志记录器导入
 
 @mcp.tool()
 async def parse_and_format_output(answer_content: str) -> str:

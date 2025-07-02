@@ -7,7 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from typing import Dict, Any
 from server import mcp  # Import from centralized app
-from loguru import logger
+from logger import log as logger  # 从中央日志记录器导入
 
 from config import API_KEY, ENDPOINT
 
