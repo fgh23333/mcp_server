@@ -17,8 +17,3 @@ TOOLS_DIRECTORY = "tools"
 
 # 默认工具存放目录
 DEFAULT_TOOLS_DIRECTORY = "static_tools"
-
-if not GOOGLE_API_KEY:
-    raise ValueError("未找到 GOOGLE_API_KEY 环境变量。请在 .env 文件中设置。")
-if not COHERE_API_KEY:
-    raise ValueError("未找到 COHERE_API_KEY 环境变量。请在 .env 文件中设置。")
